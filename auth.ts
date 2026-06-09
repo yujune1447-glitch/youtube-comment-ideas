@@ -20,15 +20,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, account, profile }) {
-      if (account?.access_token) token.accessToken = account.access_token;
-      if (profile?.email) token.email = profile.email;
+    jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
       return token;
     },
     session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined;
-      if (session.user && token.email) session.user.email = token.email as string;
-      return session;
+      return { ...session, accessToken: token.accessToken };
     },
   },
 });
