@@ -35,14 +35,20 @@ export async function GET() {
     return Response.json({ error: "No videos found" }, { status: 400 });
   }
 
-  // Step 3: fetch up to 100 comments per video
+  // Step 3: fetch up to 100 comments per video using API key (avoids OAuth scope issues)
+  const apiKey = process.env.YOUTUBE_API_KEY;
   const allComments: string[] = [];
+  const errors: { videoId: string; error: unknown }[] = [];
+
   for (const videoId of videoIds) {
     const commentsRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=100&videoId=${videoId}`,
-      { headers: { Authorization: `Bearer ${session.accessToken}` } }
+      `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=100&videoId=${videoId}&key=${apiKey}`
     );
     const commentsData = await commentsRes.json();
+    if (commentsData.error) {
+      errors.push({ videoId, error: commentsData.error });
+      continue;
+    }
     const texts: string[] =
       commentsData.items?.map(
         (c: { snippet: { topLevelComment: { snippet: { textDisplay: string } } } }) =>
@@ -51,5 +57,5 @@ export async function GET() {
     allComments.push(...texts);
   }
 
-  return Response.json({ count: allComments.length, comments: allComments });
+  return Response.json({ count: allComments.length, comments: allComments.slice(0, 5), errors, videoIds });
 }
