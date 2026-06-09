@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 export async function GET() {
   const session = await auth();
@@ -45,15 +45,15 @@ export async function GET() {
   }
 
   if (allComments.length === 0) {
-    return Response.json({ error: "No comments found" }, { status: 400 });
+    return Response.json({ error: "No comments found", videoIds, apiKeySet: Boolean(process.env.YOUTUBE_API_KEY) }, { status: 400 });
   }
 
   // Send to Gemini for clustering
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-  const prompt = `Here are ${allComments.length} YouTube comments from a creator's recent videos.
-  
+    const prompt = `Here are ${allComments.length} YouTube comments from a creator's recent videos.
+
 Identify the top 10 recurring themes or questions that appear most frequently. For each theme:
 - Give it a short title (5 words max)
 - Write one sentence describing what viewers are asking/saying
@@ -66,17 +66,22 @@ Return ONLY a JSON array like this:
 ]
 
 Comments:
-${allComments.slice(0, 500).join("\n")}`;
+${allComments.slice(0, 100).join("\n")}`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+    });
+    const text = completion.choices[0]?.message?.content ?? "";
 
-  // Extract JSON from response
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    return Response.json({ error: "AI response parsing failed", raw: text }, { status: 500 });
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      return Response.json({ error: "AI parsing failed", raw: text }, { status: 500 });
+    }
+
+    const themes = JSON.parse(jsonMatch[0]);
+    return Response.json({ themes, commentCount: allComments.length });
+  } catch (e) {
+    return Response.json({ error: "Gemini error", detail: String(e) }, { status: 500 });
   }
-
-  const themes = JSON.parse(jsonMatch[0]);
-  return Response.json({ themes, commentCount: allComments.length });
 }
