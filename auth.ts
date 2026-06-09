@@ -17,4 +17,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    jwt({ token, profile }) {
+      if (profile && "email" in profile && profile.email) {
+        token.email = profile.email;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user && token.email) {
+        session.user.email = token.email as string;
+      }
+      return session;
+    },
+  },
 });
