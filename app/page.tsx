@@ -21,12 +21,15 @@ export default async function Home() {
           </div>
 
           {session ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-sky-600/70 hidden sm:block">{session.user?.email}</span>
-              <div className="w-7 h-7 rounded-full bg-sky-200/60 border border-sky-300/50 backdrop-blur flex items-center justify-center text-sky-700 text-xs font-bold select-none">
-                {session.user?.email?.[0]?.toUpperCase() ?? "?"}
-              </div>
-            </div>
+  <div className="flex items-center gap-3">
+    <a href="/history" className="text-xs font-medium text-sky-600 hover:text-sky-800">
+      History
+    </a>
+    <span className="text-xs text-sky-600/70 hidden sm:block">{session.user?.email}</span>
+    <div className="w-7 h-7 rounded-full bg-sky-200/60 border border-sky-300/50 backdrop-blur flex items-center justify-center text-sky-700 text-xs font-bold select-none">
+      {session.user?.email?.[0]?.toUpperCase() ?? "?"}
+    </div>
+  </div>
           ) : (
             <span className="text-xs text-sky-500/60">Not signed in</span>
           )}
