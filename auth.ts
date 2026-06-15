@@ -31,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // Return token as-is if not expired yet
-      if (Date.now() < (token.expiresAt as number) * 1000 - 60_000) {
+      if (Date.now() < (token.expiresAt as number) * 1000 - 300_000) {
         return token;
       }
 
@@ -57,8 +57,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           expiresAt: Math.floor(Date.now() / 1000) + refreshed.expires_in,
           refreshToken: refreshed.refresh_token ?? token.refreshToken,
         };
-      } catch {
-        return { ...token, accessToken: undefined };
+      } catch (e) {
+        console.error("Token refresh failed:", e);
+        return { ...token, accessToken: undefined, error: "RefreshTokenError" };
       }
     },
     session({ session, token }) {
