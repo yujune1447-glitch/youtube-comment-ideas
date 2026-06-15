@@ -17,6 +17,8 @@ export async function GET() {
     { headers: { Authorization: `Bearer ${session.accessToken}` }, cache: "no-store" }
   );
   const channelData = await channelRes.json();
+  console.log("accessToken present:", Boolean(session.accessToken));
+console.log("channelData:", JSON.stringify(channelData));
 
   if (!channelRes.ok) {
     const msg = channelData?.error?.message ?? channelRes.statusText;
