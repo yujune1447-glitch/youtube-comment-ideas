@@ -62,6 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     },
     session({ session, token }) {
+      console.log("token in session callback:", JSON.stringify(token));
       return { ...session, accessToken: token.accessToken };
     },
   },
