@@ -95,12 +95,16 @@ ${allComments.slice(0, 100).join("\n")}`;
     const themes = JSON.parse(jsonMatch[0]);
 
 
-await supabase.from("analyses").insert({
-  user_id: (session as any).userId,
-  comment_count: allComments.length,
-  themes: themes,
-  created_at: new Date().toISOString(),
-});
+    const { error: insertError } = await supabase.from("analyses").insert({
+      user_id: (session as any).userId,
+      comment_count: allComments.length,
+      themes: themes,
+      created_at: new Date().toISOString(),
+    });
+    
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+}
 
 return Response.json({ themes, commentCount: allComments.length });
   } catch (e) {
