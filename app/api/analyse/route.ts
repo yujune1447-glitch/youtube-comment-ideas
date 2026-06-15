@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 import { auth } from "@/auth";
 import Groq from "groq-sdk";
@@ -95,7 +95,7 @@ ${allComments.slice(0, 100).join("\n")}`;
     const themes = JSON.parse(jsonMatch[0]);
 
 
-    const { error: insertError } = await supabase.from("analyses").insert({
+    const { error: insertError } = await supabaseAdmin.from("analyses").insert({
       user_id: (session as any).userId,
       comment_count: allComments.length,
       themes: themes,
