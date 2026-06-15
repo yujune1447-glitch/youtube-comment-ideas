@@ -7,21 +7,31 @@ export async function GET() {
     return Response.json({ error: "Not signed in" }, { status: 401 });
   }
 
+  if (!session.accessToken) {
+    return Response.json({ error: "Session expired — please sign out and sign in again" }, { status: 401 });
+  }
+
   // Fetch channel uploads playlist
   const channelRes = await fetch(
     "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true",
-    { headers: { Authorization: `Bearer ${session.accessToken}` } }
+    { headers: { Authorization: `Bearer ${session.accessToken}` }, cache: "no-store" }
   );
   const channelData = await channelRes.json();
+
+  if (!channelRes.ok) {
+    const msg = channelData?.error?.message ?? channelRes.statusText;
+    return Response.json({ error: `YouTube API error: ${msg}` }, { status: channelRes.status });
+  }
+
   const uploadsId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (!uploadsId) {
-    return Response.json({ error: "No uploads found" }, { status: 400 });
+    return Response.json({ error: "No uploads playlist found on your channel" }, { status: 400 });
   }
 
   // Get 10 most recent videos
   const videosRes = await fetch(
     `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=10&playlistId=${uploadsId}`,
-    { headers: { Authorization: `Bearer ${session.accessToken}` } }
+    { headers: { Authorization: `Bearer ${session.accessToken}` }, cache: "no-store" }
   );
   const videosData = await videosRes.json();
   const videoIds: string[] = videosData.items?.map(
