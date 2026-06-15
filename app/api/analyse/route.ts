@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 import { auth } from "@/auth";
 import Groq from "groq-sdk";
 
@@ -92,7 +94,17 @@ ${allComments.slice(0, 100).join("\n")}`;
     }
 
     const themes = JSON.parse(jsonMatch[0]);
-    return Response.json({ themes, commentCount: allComments.length });
+
+    console.log("session.user:", JSON.stringify(session.user));
+
+await supabase.from("analyses").insert({
+  user_id: session.user?.id,
+  comment_count: allComments.length,
+  themes: themes,
+  created_at: new Date().toISOString(),
+});
+
+return Response.json({ themes, commentCount: allComments.length });
   } catch (e) {
     return Response.json({ error: "Gemini error", detail: String(e) }, { status: 500 });
   }
